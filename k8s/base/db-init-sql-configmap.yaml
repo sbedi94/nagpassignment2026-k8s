@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-init-sql
+  namespace: bookstore
+data:
+  init.sql: |
+    CREATE TABLE IF NOT EXISTS books (
+        id             SERIAL PRIMARY KEY,
+        title          VARCHAR(200)  NOT NULL,
+        author         VARCHAR(150)  NOT NULL,
+        genre          VARCHAR(80)   NOT NULL,
+        published_year INTEGER       NOT NULL,
+        available      BOOLEAN       NOT NULL DEFAULT TRUE
+    );
+
+    INSERT INTO books (title, author, genre, published_year, available) VALUES
+        ('The Pragmatic Programmer',  'David Thomas & Andrew Hunt', 'Technology',   1999, TRUE),
+        ('Clean Code',                'Robert C. Martin',           'Technology',   2008, TRUE),
+        ('Designing Data-Intensive Applications', 'Martin Kleppmann', 'Technology', 2017, TRUE),
+        ('The Kubernetes Book',       'Nigel Poulton',              'Technology',   2023, TRUE),
+        ('Dune',                      'Frank Herbert',              'Sci-Fi',       1965, TRUE),
+        ('1984',                      'George Orwell',              'Dystopian',    1949, FALSE),
+        ('Sapiens',                   'Yuval Noah Harari',          'Non-Fiction',  2011, TRUE),
+        ('Atomic Habits',             'James Clear',                'Self-Help',    2018, TRUE)
+    ON CONFLICT DO NOTHING;

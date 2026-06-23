@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bookstore-ingress
+  namespace: bookstore
+  annotations:
+    # For GKE use: kubernetes.io/ingress.class: "gce"
+    # For EKS use: kubernetes.io/ingress.class: "alb"
+    # For AKS / generic nginx use the line below:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+    # For IP-only access (no DNS), leave host blank or comment it out
+    # If you get an external IP, set it here as a nip.io domain:
+    # e.g.  host: "EXTERNAL_IP.nip.io"
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bookstore-api-service
+                port:
+                  number: 80

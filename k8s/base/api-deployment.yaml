@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookstore-api
+  namespace: bookstore
+  labels:
+    app: bookstore-api
+spec:
+  replicas: 4                          # Assignment requirement: 4 pods
+  selector:
+    matchLabels:
+      app: bookstore-api
+  # ── Rolling Update Strategy ─────────────────────────────────────────────────
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1                # At most 1 pod down during update
+      maxSurge: 1                      # At most 1 extra pod during update
+  template:
+    metadata:
+      labels:
+        app: bookstore-api
+    spec:
+      containers:
+        - name: bookstore-api
+          # Replace YOUR_DOCKERHUB_USERNAME with your actual Docker Hub username
+          image: YOUR_DOCKERHUB_USERNAME/bookstore-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          # ── ConfigMap env vars (non-secret DB config) ──────────────────────
+          envFrom:
+            - configMapRef:
+                name: api-config
+          # ── Secret env var (DB password only) ─────────────────────────────
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: DB_PASSWORD
+          # ── Resource Requests & Limits (FinOps requirement) ───────────────
+          resources:
+            requests:
+              cpu: "100m"              # 0.1 vCPU guaranteed
+              memory: "128Mi"
+            limits:
+              cpu: "250m"              # Hard cap at 0.25 vCPU
+              memory: "256Mi"
+          # ── Liveness Probe: restart if app crashes ─────────────────────────
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          # ── Readiness Probe: hold traffic until DB is reachable ────────────
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+      # Terminate gracefully
+      terminationGracePeriodSeconds: 30

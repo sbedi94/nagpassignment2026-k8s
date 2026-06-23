@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: bookstore
+spec:
+  serviceName: "postgres-service"
+  replicas: 1                          # Assignment requirement: 1 pod
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine    # Lightweight official image
+          ports:
+            - containerPort: 5432
+          env:
+            # All sensitive values come from the Secret, not hardcoded
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_DB
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            # Persistent data volume — survives pod deletion
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+            # Init SQL script auto-runs on first start
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          # Liveness: restart pod if postgres stops responding
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "$(POSTGRES_USER)", "-d", "$(POSTGRES_DB)"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 5
+          # Readiness: only send traffic once DB is accepting connections
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "$(POSTGRES_USER)", "-d", "$(POSTGRES_DB)"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+        - name: init-sql
+          configMap:
+            name: db-init-sql           # ConfigMap containing init.sql
+---
+# Headless service so StatefulSet pods get stable DNS names
+# AND a ClusterIP service for the API pods to connect to
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: bookstore
+spec:
+  selector:
+    app: postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  # ClusterIP (default) — only reachable inside the cluster ✓
+  type: ClusterIP

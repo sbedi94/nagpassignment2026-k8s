@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: bookstore
+spec:
+  accessModes:
+    - ReadWriteOnce          # one node can mount at a time (standard for DB)
+  resources:
+    requests:
+      storage: 1Gi           # 1 GB — small but sufficient for this assignment
+  # storageClassName is left blank → uses cluster default (gp2 on EKS, standard on GKE/AKS)

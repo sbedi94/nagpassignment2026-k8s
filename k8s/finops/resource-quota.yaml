@@ -1,0 +1,35 @@
+# ── ResourceQuota: hard cap on entire namespace ─────────────────────────────
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: bookstore-quota
+  namespace: bookstore
+spec:
+  hard:
+    requests.cpu: "1"                  # Total CPU requests capped at 1 vCPU
+    requests.memory: "1Gi"             # Total memory requests capped at 1 GiB
+    limits.cpu: "2"                    # Total CPU limits capped at 2 vCPU
+    limits.memory: "2Gi"               # Total memory limits capped at 2 GiB
+    pods: "12"                         # Never more than 12 pods in namespace
+---
+# ── LimitRange: default limits for containers that don't specify them ────────
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: bookstore-limitrange
+  namespace: bookstore
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: "200m"
+        memory: "128Mi"
+      defaultRequest:
+        cpu: "100m"
+        memory: "64Mi"
+      max:
+        cpu: "500m"
+        memory: "512Mi"
+      min:
+        cpu: "50m"
+        memory: "32Mi"

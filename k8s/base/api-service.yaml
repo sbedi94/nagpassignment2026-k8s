@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bookstore-api-service
+  namespace: bookstore
+  labels:
+    app: bookstore-api
+spec:
+  selector:
+    app: bookstore-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: ClusterIP    # Ingress will route external traffic; no direct LoadBalancer needed
