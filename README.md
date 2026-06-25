@@ -4,11 +4,10 @@
 
 | Resource | URL |
 |---|---|
-| **GitHub Repository** | `https://github.com/YOUR_USERNAME/bookstore-k8s` |
-| **Docker Hub Image** | `https://hub.docker.com/r/YOUR_DOCKERHUB_USERNAME/bookstore-api` |
-| **Live API Endpoint** | `http://EXTERNAL_IP/books` |
+| **GitHub Repository** | `https://github.com/sbedi94/nagpassignment2026-k8s.git` |
+| **Docker Hub Image** | `https://hub.docker.com/r/sbedi/bookstore-api` |
+| **Live API Endpoint** | `http://35.234.214.145/books` |
 
-> Replace `YOUR_USERNAME`, `YOUR_DOCKERHUB_USERNAME`, and `EXTERNAL_IP` with actual values after deployment.
 
 ---
 
@@ -79,45 +78,6 @@ Internet
 
 ---
 
-## Step-by-Step Deployment
-
-### 1. Clone the repository
-```bash
-git clone https://github.com/YOUR_USERNAME/bookstore-k8s.git
-cd bookstore-k8s
-```
-
-### 2. Install Nginx Ingress Controller (if not already installed)
-```bash
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.0/deploy/static/provider/cloud/deploy.yaml
-```
-
-### 3. Log in to Docker Hub
-```bash
-docker login
-```
-
-### 4. Set your Docker Hub username and deploy
-```bash
-export DOCKERHUB_USER=your_dockerhub_username
-chmod +x deploy.sh
-./deploy.sh
-```
-
-### 5. Get the external IP
-```bash
-kubectl get ingress -n bookstore
-# Wait ~2 minutes for EXTERNAL-IP to appear
-```
-
-### 6. Test the API
-```bash
-curl http://EXTERNAL_IP/books
-curl http://EXTERNAL_IP/books/1
-curl http://EXTERNAL_IP/health
-```
-
----
 
 ## API Endpoints
 
@@ -160,24 +120,6 @@ curl http://EXTERNAL_IP/health
 4. **Spot/Preemptible nodes** — API pods are stateless and tolerant to interruption; run them on spot/preemptible nodes for 60–80% node cost reduction.
 
 5. **Single small DB instance** — StatefulSet uses 1 replica with a small PVC (1Gi), avoiding unnecessary storage cost.
-
----
-
-## Updating the Image (Rolling Update)
-
-```bash
-# Build new version
-docker build -t YOUR_DOCKERHUB_USERNAME/bookstore-api:v2 ./app
-docker push YOUR_DOCKERHUB_USERNAME/bookstore-api:v2
-
-# Trigger rolling update — zero downtime
-kubectl set image deployment/bookstore-api \
-  bookstore-api=YOUR_DOCKERHUB_USERNAME/bookstore-api:v2 \
-  -n bookstore
-
-# Watch the rollout
-kubectl rollout status deployment/bookstore-api -n bookstore
-```
 
 ---
 
